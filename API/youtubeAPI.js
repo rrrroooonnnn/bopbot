@@ -2,7 +2,8 @@ import https from 'https';
 
 
 export default async (query) => {
-    const encodedURI = encodeURI(query.replace(/\&/g, '-'));
+    const uriString = query;
+    const encodedURI = encodeURI(uriString.replace(/\&/g, '-'));
     const options = {
         host: 'youtube.googleapis.com',
         path: `/youtube/v3/search?part=snippet&q=${encodedURI}&key=${process.env.GOOGLE_API}`,
@@ -19,8 +20,21 @@ export default async (query) => {
                     }).on('end', () => {
                         const responseData = JSON.parse(bufferData);
                         if (responseData) {
-                            const videoID = responseData['items'][0]['id']['videoId'];
-                            resolve(`https://www.youtube.com/watch?v=${videoID}`)
+                            const videoList = responseData['items'];
+                            const lyricsVideo = videoList.filter((video) => {
+                                const queryTerms = query.toLowerCase().split(' ').join('');
+
+                                const videoTerms = video['snippet'].title.replace(/[^a-z0-9]/gmi, " ").replace(/\s+/g, " ").split(' ').filter(el => { const e = el.toLowerCase(); if (e !== 'quot' && e !== 'official' && e !== 'video') return e;}).join('').toLowerCase();
+                             
+                                return videoTerms.includes(queryTerms) || videoTerms === queryTerms;
+                            })
+                            const videoID = lyricsVideo.length ? lyricsVideo[0]['id']['videoId'] : null;
+                            if (videoID) {
+                                resolve(`https://www.youtube.com/watch?v=${videoID}`)
+                            }
+                            else {
+                                resolve('Sorry. Try Again.');
+                            }
                         }
                     });
                 }
@@ -42,5 +56,8 @@ export default async (query) => {
     catch (error) {
         console.log('YOUTUBE_API:' + error)
     }
+
 }
+
+
 

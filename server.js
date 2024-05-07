@@ -1,37 +1,34 @@
-import { bopBot, getState } from './bopBot.js';
-import dotenv from 'dotenv';
-import http from "http"
+import Fastify from 'fastify'
 
-import { readFile } from 'fs/promises';
+import process from "process";
+import lyricAPI from './API/lyricAPI.js';
+
+
+
+const fastify = Fastify({
+    logger: true
+  })
+
 let startUpTime = null;
-dotenv.config()
 
-
-
-const server = http.createServer(async (req, res) => {
-
-    if (req.url === '/') {
-        res.writeHead(200, {
-            'Content-Type': 'text/html',
-        });
-        const getIndexHtml = await readFile('index.html');
-        res.end(getIndexHtml);
+// Declare a route
+fastify.get('/', async function (request, reply) {
+    const query = request.query;
+    if (JSON.stringify(query) !== '{}') {
+      const song = await lyricAPI(query.lyrics)
+      reply.send({ hello: song })
+    }
+  })
+  
+  // Run the server!
+  fastify.listen({ port: 4400 }, function (err, address) {
+    if (err) {
+      fastify.log.error(err)
+      process.exit(1)
     }
 
-    if (req.url === '/bot-info') {
-        const botState = getState();
-        const dataString = JSON.stringify({ BotState: botState, LastDeployment: startUpTime });
-
-        res.write(dataString);
-        res.end();
-    }
-});
-
-
-
-server.listen(5050, () => {
     console.log('Ready.');
     startUpTime = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
     console.log(`Server Start: ${startUpTime}`);
-    bopBot(process.env.BotToken);
-})
+    // Server is now listening on ${address}
+  });
