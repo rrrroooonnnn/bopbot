@@ -75,7 +75,7 @@ class Song {
   const getSongList = (lyrics) => {
     try {
       const encodedLyrics = encodeURI(lyrics);
-      const apiToken = process.env['LYRIC_ACCESS_TOKEN'];
+      const apiToken = process.env.LYRIC_ACCESS_TOKEN;
       const options = {
         hostname: 'api.genius.com',
         path: `/search?q=${encodedLyrics}`,
