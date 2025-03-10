@@ -32,14 +32,12 @@ class Song {
               const responseData = JSON.parse(bufferData);
               if (responseData) {
                 const videoList = responseData['items'];
-                const lyricsVideo = videoList.filter((video) => {
-                  const queryTerms = query.toLowerCase().split(' ').join('');
-  
-                  const videoTerms = video['snippet'].title.replace(/[^a-z0-9]/gmi, " ").replace(/\s+/g, " ").split(' ').filter(el => { const e = el.toLowerCase(); if (e !== 'quot' && e !== 'official' && e !== 'video') return e; }).join('').toLowerCase();
-  
-                  return videoTerms.includes(queryTerms) || videoTerms === queryTerms;
-                })
-                const videoID = lyricsVideo.length ? lyricsVideo[0]['id']['videoId'] : null;
+                const video = videoList.filter((vid) => {
+                  const queryTerms = query.toLowerCase();                
+                  const videoTerms = vid['snippet'].title.split(' ');                                             
+                  return videoTerms.every((element, i, array) => queryTerms.toLowerCase().includes(element.toLowerCase()))
+                });
+                const videoID = video.length ? video[0]['id']['videoId'] : null;
                 if (videoID) {
                   resolve(`https://www.youtube.com/watch?v=${videoID}`)
                 }
